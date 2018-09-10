@@ -118,7 +118,7 @@ namespace MenuSample
             Brush background;
             Brush text;
             var isEnabled = (e.Item as MenuListViewItem)?.Enabled ?? true;
-            if (!isEnabled)
+            if (!isEnabled || !Enabled)
             {
                 // On disabled, change color
                 background = SystemBrushes.ControlDark;
