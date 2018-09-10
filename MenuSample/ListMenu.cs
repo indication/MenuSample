@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace MenuSample
 {
+    /// <summary>
+    /// Menu control
+    /// </summary>
     public partial class ListMenu : UserControl
     {
         /// <summary>
@@ -47,18 +45,36 @@ namespace MenuSample
             }
         }
 
-        public class MenuSelectedEventArgs : EventArgs
-        {
-            public MenuListViewItem Item { get; private set; }
-            public MenuSelectedEventArgs(MenuListViewItem item)
-            {
-                Item = item;
-            }
-        }
-        public event EventHandler<MenuSelectedEventArgs> MenuGroupSelectionChanged;
-        public event EventHandler<MenuSelectedEventArgs> MenuDetailSelectionChanged;
-        public event EventHandler<MenuSelectedEventArgs> MenuDetailDoubleClick;
+        /// <summary>
+        /// Menu item group selection changed
+        /// </summary>
+        public event EventHandler<MenuEventArgs> MenuGroupSelectionChanged;
+        /// <summary>
+        /// Menu item detail selection changed
+        /// </summary>
+        public event EventHandler<MenuEventArgs> MenuDetailSelectionChanged;
+        /// <summary>
+        /// Menu item detail double clicked
+        /// </summary>
+        public event EventHandler<MenuEventArgs> MenuDetailDoubleClick;
 
+        /// <summary>
+        /// Menu items
+        /// </summary>
+        [Browsable(false)]
+        public ListView.ListViewItemCollection Items
+        {
+            get { return listGroup.Items; }
+        }
+
+        /// <summary>
+        /// Menu groups
+        /// </summary>
+        [Browsable(false)]
+        public ListViewGroupCollection Groups
+        {
+            get { return listGroup.Groups; }
+        }
 
         /// <summary>
         /// Redraw menu on property changed
@@ -68,24 +84,12 @@ namespace MenuSample
             listGroup.Invalidate();
             listDetail.Invalidate();
         }
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public ListMenu()
         {
             InitializeComponent();
-            var group1 = new ListViewGroup("group1");
-            listGroup.Groups.Add(group1);
-            var group2 = new ListViewGroup("group2");
-            listGroup.Groups.Add(group2);
-            listGroup.Items.Add(new MenuListViewItem(new []{ "aaaaa01" , "subtitle"}, group1));
-            listGroup.Items.Add(new MenuListViewItem(new[] { "bbbbb02", "subtitle"}, group1).SubMenuAdd(new MenuListViewItem(new[] { "bbbbb05", "subtitle" }), new MenuListViewItem(new[] { "bbbbb06", "subtitle" })));
-            listGroup.Items.Add(new MenuListViewItem(new[] { "aaaaa03", "subtitle"}, group1).SubMenuAdd(new MenuListViewItem(new[] { "bbbbb05", "subtitle" })));
-            listGroup.Items.Add(new MenuListViewItem(new[] { "bbbbb04", "subtitle"}, group1));
-            listGroup.Items.Add(new MenuListViewItem(new[] { "aaaaa05", "subtitle"}, group2));
-            listGroup.Items.Add(new MenuListViewItem(new[] { "bbbbb06", "subtitle"}, group2));
-            listGroup.Items.Add(new MenuListViewItem(new[] { "aaaaa07", "subtitle"}, group2));
-            listGroup.Items.Add(new MenuListViewItem(new[] { "bbbbb08", "subtitle"}, group2));
-            listGroup.Items.Add(new MenuListViewItem(new[] { "aaaaa09", "subtitle"}, group2));
-            listGroup.Items.Add(new MenuListViewItem(new[] { "bbbbb10", "subtitle"}, group2));
-            (listGroup.Items[0] as MenuListViewItem).Enabled = false;
         }
         /// <summary>
         /// Initialize
@@ -109,7 +113,7 @@ namespace MenuSample
         /// Splitter resized event
         /// </summary>
         /// <param name="sender">event sender</param>
-        /// <param name="e">event</param>
+        /// <param name="e">event parameter</param>
         private void splitContainer1_SplitterMoved(object sender, SplitterEventArgs e)
         {
             listMenu_Resized();
@@ -129,19 +133,42 @@ namespace MenuSample
             listDetail.Width = rightSize;
         }
 
+        /// <summary>
+        /// Group selection changed event
+        /// </summary>
+        /// <param name="sender">event sender</param>
+        /// <param name="e">event parameter</param>
         private void listGroup_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
             var item = e.Item as MenuListViewItem;
             if (item == null)
                 return;
-            MenuGroupSelectionChanged?.Invoke(this, new MenuSelectedEventArgs(item));
+            MenuGroupSelectionChanged?.Invoke(this, new MenuEventArgs(item));
             listDetail.SelectedIndices.Clear();
             listDetail.Items.Clear();
             listDetail.Groups.Clear();
             listDetail.Groups.AddRange(item.SubMenuGroups.ToArray());
             listDetail.Items.AddRange(item.SubMenuItems.ToArray());
         }
+        /// <summary>
+        /// Detail selection changed event
+        /// </summary>
+        /// <param name="sender">event sender</param>
+        /// <param name="e">event parameter</param>
+        private void listDetail_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
+        {
+            var item = e.Item as MenuListViewItem;
+            if (item == null)
+                return;
+            MenuDetailSelectionChanged?.Invoke(this, new MenuEventArgs(item));
+        }
 
+        #region Key events
+        /// <summary>
+        /// Group key down event
+        /// </summary>
+        /// <param name="sender">event sender</param>
+        /// <param name="e">event parameter</param>
         private void listGroup_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyData == Keys.Right)
@@ -153,6 +180,11 @@ namespace MenuSample
             }
         }
 
+        /// <summary>
+        /// Detail key down event
+        /// </summary>
+        /// <param name="sender">event sender</param>
+        /// <param name="e">event parameter</param>
         private void listDetail_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyData == Keys.Left)
@@ -160,18 +192,19 @@ namespace MenuSample
                 FocusGroup();
             }
         }
+        #endregion
 
-        private void listDetail_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
-        {
-            var item = e.Item as MenuListViewItem;
-            if (item == null)
-                return;
-            MenuDetailSelectionChanged?.Invoke(this, new MenuSelectedEventArgs(item));
-        }
+        /// <summary>
+        /// Focus to group
+        /// </summary>
         public void FocusGroup()
         {
             listGroup.Focus();
         }
+        /// <summary>
+        /// Focus to detail
+        /// </summary>
+        /// <param name="isSelect">If not selected, select first item</param>
         public void FocusDetail(bool isSelect)
         {
             listDetail.Focus();
@@ -189,6 +222,11 @@ namespace MenuSample
             }
         }
 
+        /// <summary>
+        /// Double click event on detail
+        /// </summary>
+        /// <param name="sender">event sender</param>
+        /// <param name="e">event parameter</param>
         private void listDetail_DoubleClick(object sender, EventArgs e)
         {
             var list = sender as ListView;
@@ -199,7 +237,7 @@ namespace MenuSample
             var item = list.SelectedItems[0] as MenuListViewItem;
             if (item == null || !item.Enabled)
                 return;
-            MenuDetailDoubleClick?.Invoke(this, new MenuSelectedEventArgs(item));
+            MenuDetailDoubleClick?.Invoke(this, new MenuEventArgs(item));
         }
     }
 }

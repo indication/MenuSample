@@ -42,7 +42,6 @@
             this.ShowItemToolTips = true;
             this.View = System.Windows.Forms.View.Tile;
             this.DrawItem += new System.Windows.Forms.DrawListViewItemEventHandler(this.DoubleBufferingListView_DrawItem);
-            this.ItemMouseHover += new System.Windows.Forms.ListViewItemMouseHoverEventHandler(this.DoubleBufferingListView_ItemMouseHover);
             this.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.DoubleBufferingListView_ItemSelectionChanged);
             this.Resize += new System.EventHandler(this.DoubleBufferingListView_Resize);
             this.ResumeLayout(false);

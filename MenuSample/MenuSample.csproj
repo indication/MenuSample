@@ -63,6 +63,7 @@
       <DependentUpon>ListMenu.cs</DependentUpon>
     </Compile>
     <Compile Include="MenuListViewItem.cs" />
+    <Compile Include="MenuSelectedEventArgs.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="DoubleBufferingListView.resx">
