@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace MenuSample
@@ -141,14 +143,18 @@ namespace MenuSample
         private void listGroup_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
             var item = e.Item as MenuListViewItem;
-            if (item == null)
+            if (item == null || !e.IsSelected)
                 return;
             MenuGroupSelectionChanged?.Invoke(this, new MenuEventArgs(item));
             listDetail.SelectedIndices.Clear();
+            var storedGroups = new List<ListViewGroup>();
+            var keys = listDetail.Items.Cast<ListViewItem>().ToDictionary(k => k, i => i.Group);
             listDetail.Items.Clear();
             listDetail.Groups.Clear();
-            listDetail.Groups.AddRange(item.SubMenuGroups.ToArray());
+            foreach (var pair in keys.Where(w => w.Value != null))
+                pair.Key.Group = pair.Value;
             listDetail.Items.AddRange(item.SubMenuItems.ToArray());
+            listDetail.Groups.AddRange(item.SubMenuGroups.ToArray());
         }
         /// <summary>
         /// Detail selection changed event
@@ -158,7 +164,7 @@ namespace MenuSample
         private void listDetail_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
             var item = e.Item as MenuListViewItem;
-            if (item == null)
+            if (item == null || !e.IsSelected)
                 return;
             MenuDetailSelectionChanged?.Invoke(this, new MenuEventArgs(item));
         }
@@ -187,9 +193,16 @@ namespace MenuSample
         /// <param name="e">event parameter</param>
         private void listDetail_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyData == Keys.Left)
+            switch (e.KeyData)
             {
-                FocusGroup();
+                case Keys.Left:
+                    FocusGroup();
+                    break;
+                case Keys.Enter:
+                    listDetail_DoubleClick(sender, e);
+                    break;
+                default:
+                    break;
             }
         }
         #endregion
